@@ -1,0 +1,48 @@
+diff --git a/packages/app/src/runtime/i18n/en.ts b/packages/app/src/runtime/i18n/en.ts
+index 6ee0b5a..3cd1827 100644
+--- a/packages/app/src/runtime/i18n/en.ts
++++ b/packages/app/src/runtime/i18n/en.ts
+@@ -844,6 +844,11 @@ export const dict = {
+     "Choose whether to queue follow-ups or steer the current turn. Use {{keybind}} to switch.",
+   "settings.general.row.followUpBehavior.queue": "Queue",
+   "settings.general.row.followUpBehavior.steer": "Steer",
++  "settings.general.row.enterBehavior.title": "Enter key behavior",
++  "settings.general.row.enterBehavior.description":
++    "Choose whether Enter sends the message or inserts a newline. In newline mode, use {{keybind}} or {{modKeybind}} to send.",
++  "settings.general.row.enterBehavior.send": "Enter to send",
++  "settings.general.row.enterBehavior.newline": "Enter for newline",
+   "settings.general.row.pinchZoom.title": "Pinch to zoom",
+   "settings.general.row.pinchZoom.description": "Allow trackpad pinch and Ctrl-scroll gestures to zoom",
+ 
+diff --git a/packages/app/src/runtime/i18n/zh.ts b/packages/app/src/runtime/i18n/zh.ts
+index b7d19c1..24ef62d 100644
+--- a/packages/app/src/runtime/i18n/zh.ts
++++ b/packages/app/src/runtime/i18n/zh.ts
+@@ -758,6 +758,11 @@ export const dict = {
+     "选择将后续消息加入队列还是引导当前轮次。使用 {{keybind}} 切换。",
+   "settings.general.row.followUpBehavior.queue": "加入队列",
+   "settings.general.row.followUpBehavior.steer": "引导",
++  "settings.general.row.enterBehavior.title": "回车键行为",
++  "settings.general.row.enterBehavior.description":
++    "选择回车是发送消息还是插入换行。设为换行模式后，使用 {{keybind}} 或 {{modKeybind}} 发送。",
++  "settings.general.row.enterBehavior.send": "回车发送",
++  "settings.general.row.enterBehavior.newline": "回车换行",
+   "session.new.workspace.branch.search.placeholder": "搜索分支",
+   "toast.migration.progress.clearingOldEvents": "正在清除旧事件",
+   "toast.migration.progress.migratingSessions": "正在迁移会话",
+diff --git a/packages/app/src/runtime/i18n/zht.ts b/packages/app/src/runtime/i18n/zht.ts
+index 82ab93c..729a328 100644
+--- a/packages/app/src/runtime/i18n/zht.ts
++++ b/packages/app/src/runtime/i18n/zht.ts
+@@ -750,6 +750,11 @@ export const dict = {
+     "選擇將後續訊息排入佇列或引導目前的輪次。使用 {{keybind}} 切換。",
+   "settings.general.row.followUpBehavior.queue": "排入佇列",
+   "settings.general.row.followUpBehavior.steer": "引導",
++  "settings.general.row.enterBehavior.title": "Enter 鍵行為",
++  "settings.general.row.enterBehavior.description":
++    "選擇 Enter 是傳送訊息還是插入換行。設為換行模式後，使用 {{keybind}} 或 {{modKeybind}} 傳送。",
++  "settings.general.row.enterBehavior.send": "Enter 傳送",
++  "settings.general.row.enterBehavior.newline": "Enter 換行",
+   "session.new.workspace.branch.search.placeholder": "搜尋分支",
+   "toast.migration.progress.clearingOldEvents": "正在清除舊事件",
+   "toast.migration.progress.migratingSessions": "正在移轉工作階段",
