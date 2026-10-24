@@ -125,7 +125,7 @@ cd opencode-build
 #    放进 artifact/ 或任意目录
 
 # 3) 安装（指定 ELF 所在目录或文件）
-bash installer/opencode-termux.sh install ./artifact
+bash opencode-termux.sh install ./artifact
 ```
 
 安装器会**先校验 SHA256**，不匹配立即终止。详见 `docs/INSTALLER.md`。
@@ -136,7 +136,7 @@ bash installer/opencode-termux.sh install ./artifact
 
 1. 本地重新构建：`bash build/build.sh`
 2. 校验：`bash build/verify.sh`
-3. 更新 `installer/opencode-termux.sh` 里的 `EXPECTED_SHA256`，与
+3. 更新 `opencode-termux.sh` 里的 `EXPECTED_SHA256`，与
    `artifact/opencode.sha256` 保持一致
 4. 提交源码改动与新的 `artifact/opencode.sha256`
 5. 生成离线包：`bash build/package-release.sh`（输出 `$HOME/opencode.zip`）

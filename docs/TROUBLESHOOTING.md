@@ -186,8 +186,8 @@ git fetch --depth 1 origin 4d5965762ec5e0d1a0b14630553fc62b51a11fba
 
 **处置**：显式指定目录或文件即可（路径可为目录，也可为 ELF 文件本身，推荐用相对当前目录的路径）：
 ```bash
-bash installer/opencode-termux.sh install ./artifact
-bash installer/opencode-termux.sh install ./opencode
+bash opencode-termux.sh install ./artifact
+bash opencode-termux.sh install ./opencode
 ```
 定位规则详见 `docs/ARCHITECTURE.md` §2.3 与 `docs/INSTALLER.md` §3.3。
 
@@ -236,7 +236,7 @@ uname -m; echo $PREFIX; bun --version; node --version; command -v greadelf
 bash build/verify.sh
 
 # 3) 安装状态（安装器只读诊断；也可直接用 ocdoctor）
-bash installer/opencode-termux.sh doctor
+bash opencode-termux.sh doctor
 
 # 4) Web UI
 opencode serve --port 40999 &

@@ -95,7 +95,7 @@ source ./env.sh
 opencode_artifact_candidates   # 构建侧脚本的查找顺序
 ```
 
-> **安装器是特例**：`installer/opencode-termux.sh` 为「可独立复制运行」而**不** source
+> **安装器是特例**：`opencode-termux.sh` 为「可独立复制运行」而**不** source
 > `env.sh`，它自带 `find_elf()`（显式路径 > 当前目录候选 > 深度搜索）。
 > 两者口径**不必相同**，各自服务不同场景。详见 `docs/ARCHITECTURE.md` §1.1 / §2.3。
 
@@ -353,18 +353,18 @@ error: "opentuiAliasPlugin" has already been declared
 
 ---
 
-## 8. 安装器 `installer/opencode-termux.sh`
+## 8. 安装器 `opencode-termux.sh`
 
 > 设计文档见 `docs/INSTALLER.md`；架构视角见 `docs/ARCHITECTURE.md` §2。
 
 ### 8.1 命令
 ```bash
-bash installer/opencode-termux.sh                 # 交互菜单
-bash installer/opencode-termux.sh install  [路径]  # 全新安装
-bash installer/opencode-termux.sh reinstall [路径] # 卸载重装（y/N 确认）
-bash installer/opencode-termux.sh uninstall        # 卸载（y/N 确认）
-bash installer/opencode-termux.sh doctor           # 只读诊断
-bash installer/opencode-termux.sh help             # 帮助
+bash opencode-termux.sh                 # 交互菜单
+bash opencode-termux.sh install  [路径]  # 全新安装
+bash opencode-termux.sh reinstall [路径] # 卸载重装（y/N 确认）
+bash opencode-termux.sh uninstall        # 卸载（y/N 确认）
+bash opencode-termux.sh doctor           # 只读诊断
+bash opencode-termux.sh help             # 帮助
 ```
 
 `路径` 可为 **ELF 文件** 或 **目录**；省略时在当前目录按文件名搜索。

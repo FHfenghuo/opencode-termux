@@ -19,7 +19,7 @@
 pkg install unzip
 unzip opencode.zip
 cd opencode-build
-bash installer/opencode-termux.sh install ./artifact
+bash opencode-termux.sh install ./artifact
 ```
 
 ### 2. 只下载 ELF 文件
@@ -27,13 +27,13 @@ bash installer/opencode-termux.sh install ./artifact
 从 [Releases](../../releases) 下载 `opencode` 文件后，将其放入 `opencode-build/` 目录并安装：
 
 ```bash
-bash installer/opencode-termux.sh install ./opencode
+bash opencode-termux.sh install ./opencode
 ```
 
 也可以将其放入 `opencode-build/artifact/` 目录后安装：
 
 ```bash
-bash installer/opencode-termux.sh install ./artifact
+bash opencode-termux.sh install ./artifact
 ```
 
 ## 可用命令
@@ -52,8 +52,8 @@ bash installer/opencode-termux.sh install ./artifact
 
 ```bash
 # 卸载重装
-bash installer/opencode-termux.sh reinstall ./artifact
+bash opencode-termux.sh reinstall ./artifact
 
 # 卸载
-bash installer/opencode-termux.sh uninstall
+bash opencode-termux.sh uninstall
 ```
