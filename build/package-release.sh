@@ -7,7 +7,7 @@
 #   默认：$HOME/opencode.zip
 #
 # 内容与仓库布局一致，但不包含 .git、构建树、临时文件：
-#   README.md artifact/ build/ opencode-termux.sh
+#   README.md .gitignore env.sh artifact/ installer/ build/ upstream/ docs/
 #
 # 该脚本只负责打包，不重新构建；请先执行 build/build.sh 与 build/verify.sh。
 # =============================================================================
@@ -28,7 +28,7 @@ trap 'rm -rf -- "$STAGE"' EXIT
 DEST="$STAGE/opencode-build"
 mkdir -p -- "$DEST"
 
-for entry in README.md artifact build opencode-termux.sh; do
+for entry in README.md .gitignore env.sh artifact installer build upstream docs; do
   [ -e "$PKG_ROOT/$entry" ] || { echo "缺少打包项：$entry" >&2; exit 1; }
   cp -a -- "$PKG_ROOT/$entry" "$DEST/"
 done
