@@ -1,6 +1,6 @@
 # 目录架构与安装流程
 
-> 本文档说明本包的目录职责、路径真源，以及 `installer/opencode-termux.sh` 的安装流程。
+> 本文档说明本包的目录职责、路径真源，以及 `opencode-termux.sh` 的安装流程。
 > 所有内容均按**当前实际状态**编写（安装器已按「固定串行流水线、不做历史回滚」重写）。
 
 ## 1. 整体目录架构
@@ -84,7 +84,7 @@ opencode-build/                      # 包根（OPENCODE_BUILD_ROOT）
 8) $PWD/opencode                             # 当前目录
 ```
 
-> **注意**：安装器（`installer/opencode-termux.sh`）为**独立运行**设计，**不** source
+> **注意**：安装器（`opencode-termux.sh`）为**独立运行**设计，**不** source
 > `env.sh`，而是用自己的 `find_elf()`（见 §2.3）。其候选规则比上表更简洁，
 > 且以「显式指定路径 > 当前目录 > 深度搜索」为序。
 
@@ -242,23 +242,23 @@ opencode-termux.sh
 
 ```bash
 # 交互菜单
-bash installer/opencode-termux.sh
+bash opencode-termux.sh
 
 # 全新安装（在当前目录按文件名搜索 ELF）
-bash installer/opencode-termux.sh install
+bash opencode-termux.sh install
 
 # 全新安装（指定目录或文件，均为相对本仓库的路径）
-bash installer/opencode-termux.sh install ./artifact
-bash installer/opencode-termux.sh install ./opencode
+bash opencode-termux.sh install ./artifact
+bash opencode-termux.sh install ./opencode
 
 # 卸载重装
-bash installer/opencode-termux.sh reinstall ./artifact
+bash opencode-termux.sh reinstall ./artifact
 
 # 卸载
-bash installer/opencode-termux.sh uninstall
+bash opencode-termux.sh uninstall
 
 # 只读诊断（也可用 ocdoctor）
-bash installer/opencode-termux.sh doctor
+bash opencode-termux.sh doctor
 ```
 
 ---

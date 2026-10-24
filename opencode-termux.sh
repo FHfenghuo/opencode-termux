@@ -18,12 +18,12 @@
 #   命令软链    $PREFIX/bin/<name> -> $HOME/opencode/bin/<name>
 #
 # 用法：
-#   bash installer/opencode-termux.sh                 交互菜单
-#   bash installer/opencode-termux.sh install [文件或目录]   全新安装（推荐使用 ./artifact 或 ./opencode）
-#   bash installer/opencode-termux.sh reinstall [文件或目录] 卸载重装（y/N 确认）
-#   bash installer/opencode-termux.sh uninstall        卸载（y/N 确认）
-#   bash installer/opencode-termux.sh doctor           本地诊断
-#   bash installer/opencode-termux.sh help             帮助
+#   bash opencode-termux.sh                 交互菜单
+#   bash opencode-termux.sh install [文件或目录]   全新安装（推荐使用 ./artifact 或 ./opencode）
+#   bash opencode-termux.sh reinstall [文件或目录] 卸载重装（y/N 确认）
+#   bash opencode-termux.sh uninstall        卸载（y/N 确认）
+#   bash opencode-termux.sh doctor           本地诊断
+#   bash opencode-termux.sh help             帮助
 # =============================================================================
 set -Eeuo pipefail
 umask 077

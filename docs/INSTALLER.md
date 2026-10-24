@@ -1,6 +1,6 @@
 # 安装器设计文档
 
-> 对应脚本：`installer/opencode-termux.sh`
+> 对应脚本：`opencode-termux.sh`
 > 目标平台：Android / Termux，aarch64，Bionic（无 glibc）
 
 ---
