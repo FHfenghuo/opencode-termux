@@ -1,0 +1,97 @@
+diff --git a/packages/cli/script/app-assets.ts b/packages/cli/script/app-assets.ts
+index 0af7aa1..99bd12b 100644
+--- a/packages/cli/script/app-assets.ts
++++ b/packages/cli/script/app-assets.ts
+@@ -1,35 +1,45 @@
+-import { $ } from "bun"
+ import path from "node:path"
+-import { promisify } from "node:util"
+-import { brotliCompress, constants } from "node:zlib"
++import { readFileSync } from "node:fs"
++import { spawnSync } from "node:child_process"
++import { brotliCompressSync, constants } from "node:zlib"
+ import { AppArchive } from "../src/app-archive"
+ import { collectFiles } from "./files"
+ 
+ export async function buildAppArchive(channel: string, options?: { skipBuild?: boolean }) {
+   if (options?.skipBuild) return AppArchive.encode([])
+   const root = path.resolve(import.meta.dirname, "../../app")
+-  await $`bun run build`
+-    .cwd(root)
+-    .env({ ...process.env, OPENCODE_CHANNEL: channel, VITE_OPENCODE_SERVER_MODE: "origin" })
++  buildVite(root, channel)
+   return AppArchive.encode(
+-    await Promise.all(
+-      (await collectFiles(path.join(root, "dist")))
+-        .map((key) => key.replaceAll(path.sep, "/"))
+-        .filter((key) => !key.endsWith(".map"))
+-        .toSorted()
+-        .map(async (key) => {
+-          const body = Buffer.from(await Bun.file(path.join(root, "dist", key)).arrayBuffer())
+-          // Independent entries let the server materialize only assets the browser requests.
+-          return [key, await compress(body)] as const
+-        }),
+-    ),
++    collectFiles(path.join(root, "dist"))
++      .map((key) => key.replaceAll(path.sep, "/"))
++      .filter((key) => !key.endsWith(".map"))
++      .toSorted()
++      // Independent entries let the server materialize only assets the browser requests.
++      .map((key) => [key, compress(readFileSync(path.join(root, "dist", key)))] as const),
+   )
+ }
+ 
++// Run vite with spawnSync rather than a shell. This module imports `effect`,
++// whose runtime keeps Bun's event loop alive under Termux; a shell promise then
++// never observes the child exiting and the whole CLI build hangs after vite has
++// already printed "built in". spawnSync blocks until the child truly exits.
++// The child is `vite-build.mjs`, which drives vite's build() API and force-exits
++// because the plain `vite build` CLI does not exit in this environment either.
++function buildVite(root: string, channel: string) {
++  const result = spawnSync("node", ["vite-build.mjs"], {
++    cwd: root,
++    stdio: "inherit",
++    env: { ...process.env, OPENCODE_CHANNEL: channel, VITE_OPENCODE_SERVER_MODE: "origin" },
++  })
++  if (result.status !== 0) throw new Error(`vite build failed with status ${result.status}`)
++}
++
+ // The assets compress once per release, so they take brotli's best quality: about 11% smaller than quality 6 for the
+-// web UI. Each runs on the thread pool, which keeps the build to about a minute.
++// web UI. Compression runs synchronously: under Termux the async zlib thread pool does not drain, so a batched
++// `Promise.all` of brotliCompress calls would leave the build hanging forever. Reading and compressing in sequence
++// keeps the whole build off the thread pool.
+ function compress(body: Buffer) {
+-  return promisify(brotliCompress)(body, {
++  return brotliCompressSync(body, {
+     params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: body.length },
+   })
+ }
+diff --git a/packages/cli/script/files.ts b/packages/cli/script/files.ts
+index baeacf3..54459c4 100644
+--- a/packages/cli/script/files.ts
++++ b/packages/cli/script/files.ts
+@@ -1,13 +1,13 @@
+-import { readdir } from "node:fs/promises"
++import { readdirSync } from "node:fs"
+ import path from "node:path"
+ 
+-export async function collectFiles(root: string, current = root): Promise<string[]> {
+-  return (
+-    await Promise.all(
+-      (await readdir(current, { withFileTypes: true })).map(async (entry) => {
+-        const target = path.join(current, entry.name)
+-        return entry.isDirectory() ? collectFiles(root, target) : [path.relative(root, target)]
+-      }),
+-    )
+-  ).flat()
++// Collects every file under `root` as a path relative to it. Uses sync fs on
++// purpose: under Termux, once a process imports `effect`, Bun's async fs runs
++// on a thread pool that never drains, so `readdir` from node:fs/promises would
++// hang the build. Sync traversal avoids the pool entirely.
++export function collectFiles(root: string, current = root): string[] {
++  return readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
++    const target = path.join(current, entry.name)
++    return entry.isDirectory() ? collectFiles(root, target) : [path.relative(root, target)]
++  })
+ }

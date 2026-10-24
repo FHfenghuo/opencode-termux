@@ -1,0 +1,175 @@
+diff --git a/packages/app/src/composer/editor/editor.tsx b/packages/app/src/composer/editor/editor.tsx
+index defbf66..dd67bdb 100644
+--- a/packages/app/src/composer/editor/editor.tsx
++++ b/packages/app/src/composer/editor/editor.tsx
+@@ -264,11 +264,16 @@ export function ComposerEditor(props: ComposerEditorProps) {
+                 return
+               }
+ 
+-              if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
++              if (event.key === "Enter" && !event.isComposing) {
++                const enterBehavior = view.enterBehavior?.() ?? "send"
++                const submits = enterBehavior === "send" ? !event.shiftKey : event.shiftKey || mod
++
++                if (!submits) return
++
+                 event.preventDefault()
+ 
+                 if (event.repeat) return
+-                props.controller.submit(mod ? { alternate: true } : undefined)
++                props.controller.submit(mod && !event.shiftKey ? { alternate: true } : undefined)
+               }
+             }}
+             onKeyUp={updateCursor}
+diff --git a/packages/app/src/composer/editor/interaction.ts b/packages/app/src/composer/editor/interaction.ts
+index bde7d86..627754e 100644
+--- a/packages/app/src/composer/editor/interaction.ts
++++ b/packages/app/src/composer/editor/interaction.ts
+@@ -33,6 +33,9 @@ export type ComposerSelectControl = {
+ export type ComposerEditorView = {
+   draftOnly?: boolean
+   placeholder?: Accessor<string>
++  // Which key combination submits the prompt. "send": Enter submits, Shift+Enter inserts a newline.
++  // "newline": Enter inserts a newline, Shift+Enter or Cmd/Ctrl+Enter submits.
++  enterBehavior?: Accessor<"send" | "newline">
+   add?: {
+     onAttach: () => void
+   }
+diff --git a/packages/app/src/composer/model.ts b/packages/app/src/composer/model.ts
+index e19b4a7..0e76869 100644
+--- a/packages/app/src/composer/model.ts
++++ b/packages/app/src/composer/model.ts
+@@ -26,6 +26,7 @@ import { createComposerHistory } from "./history/store"
+ import { createComposerSubmit } from "./submit"
+ import { useAttachmentDestination } from "./attachments/destination"
+ import { parseClientSlashCommand } from "./client-slash-command"
++import { useSettings } from "@/settings/model"
+ 
+ export type ComposerModel = ComposerEditorModel & {
+   readonly model: ComposerControls["model"]
+@@ -53,6 +54,7 @@ export function createComposerModel(adapter: ComposerAdapter, options?: { queue?
+   const command = useCommand()
+   const language = useLanguage()
+   const platform = usePlatform()
++  const settings = useSettings()
+   const prompt = adapter.state
+   let editor: HTMLDivElement | undefined
+ 
+@@ -388,6 +390,7 @@ export function createComposerModel(adapter: ComposerAdapter, options?: { queue?
+     },
+     view: {
+       placeholder,
++      enterBehavior: () => settings.general.enterBehavior(),
+       get agent() {
+         const agents = adapter.controls().agents
+ 
+diff --git a/packages/app/src/settings/general/general.tsx b/packages/app/src/settings/general/general.tsx
+index 02099ac..4488b0f 100644
+--- a/packages/app/src/settings/general/general.tsx
++++ b/packages/app/src/settings/general/general.tsx
+@@ -7,6 +7,7 @@ import { useLanguage } from "@/runtime/i18n/language"
+ import { usePlatform } from "@/runtime/platform/platform"
+ import { ExtensionSettingsSections } from "@/runtime/extension/settings-page-view"
+ import {
++  type EnterBehavior,
+   type FollowUpBehavior,
+   type TerminalPlacement,
+   type WorkspaceDefaultDestination,
+@@ -161,6 +162,37 @@ const FollowUpBehaviorSetting: Component = () => {
+   )
+ }
+ 
++const EnterBehaviorSetting: Component = () => {
++  const language = useLanguage()
++  const settings = useSettings()
++
++  const options = createMemo((): { value: EnterBehavior; label: string }[] => [
++    { value: "send", label: language.t("settings.general.row.enterBehavior.send") },
++    { value: "newline", label: language.t("settings.general.row.enterBehavior.newline") },
++  ])
++
++  return (
++    <SettingsRow
++      title={language.t("settings.general.row.enterBehavior.title")}
++      description={language.t("settings.general.row.enterBehavior.description", {
++        keybind: formatKeybind("shift+enter", language.t),
++        modKeybind: formatKeybind("mod+enter", language.t),
++      })}
++    >
++      <Select
++        data-action="settings-enter-behavior"
++        options={options()}
++        current={options().find((option) => option.value === settings.general.enterBehavior())}
++        value={(option) => option.value}
++        label={(option) => option.label}
++        placement="bottom-end"
++        gutter={6}
++        onSelect={(option) => option && settings.general.setEnterBehavior(option.value)}
++      />
++    </SettingsRow>
++  )
++}
++
+ const LanguageSetting = () => {
+   const language = useLanguage()
+ 
+@@ -262,6 +294,7 @@ export const SettingsGeneral: Component = () => {
+ 
+         <TerminalPlacementSetting />
+         <FollowUpBehaviorSetting />
++        <EnterBehaviorSetting />
+ 
+         <Show when={desktop()}>
+           <SettingsRow
+diff --git a/packages/app/src/settings/model.test.ts b/packages/app/src/settings/model.test.ts
+index b83db39..90aba18 100644
+--- a/packages/app/src/settings/model.test.ts
++++ b/packages/app/src/settings/model.test.ts
+@@ -97,6 +97,7 @@ describe("settings schema", () => {
+         mobileTitlebarPosition: "top",
+         terminalPlacement: "side",
+         followUpBehavior: "steer",
++        enterBehavior: "send",
+       },
+       appearance: {
+         fontSize: 14,
+diff --git a/packages/app/src/settings/model.tsx b/packages/app/src/settings/model.tsx
+index 8efa301..a85a9c9 100644
+--- a/packages/app/src/settings/model.tsx
++++ b/packages/app/src/settings/model.tsx
+@@ -17,6 +17,8 @@ export type TerminalPlacement = Settings["general"]["terminalPlacement"]
+ 
+ export type FollowUpBehavior = Settings["general"]["followUpBehavior"]
+ 
++export type EnterBehavior = Settings["general"]["enterBehavior"]
++
+ export type TabLayout = Settings["appearance"]["tabLayout"]
+ 
+ export type NotificationSettings = Settings["notifications"]
+@@ -122,6 +124,7 @@ const generalSchema = Persistence.struct({
+   mobileDiffWrap: Persistence.optional(Schema.Boolean),
+   terminalPlacement: Schema.Literals(["side", "bottom"]),
+   followUpBehavior: Schema.Literals(["queue", "steer"]),
++  enterBehavior: Schema.Literals(["send", "newline"]),
+ })
+ 
+ const appearanceSchema = Persistence.struct({
+@@ -283,6 +286,7 @@ export const defaultSettings: Settings = {
+     mobileTitlebarPosition: "top",
+     terminalPlacement: "side",
+     followUpBehavior: "steer",
++    enterBehavior: "send",
+   },
+   appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: "horizontal" },
+   keybinds: {},
+@@ -375,6 +379,10 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
+         setFollowUpBehavior(value: FollowUpBehavior) {
+           setStore("general", "followUpBehavior", value)
+         },
++        enterBehavior: withFallback(() => store.general?.enterBehavior, defaultSettings.general.enterBehavior),
++        setEnterBehavior(value: EnterBehavior) {
++          setStore("general", "enterBehavior", value)
++        },
+       },
+       visibility: {
+         fileTree: showFileTree,
