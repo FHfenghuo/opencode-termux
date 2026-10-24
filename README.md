@@ -13,7 +13,7 @@
 
 ### 1. 使用离线包（推荐）
 
-从 [Releases](../../releases) 下载 `opencode.zip`，解压并进入目录后安装：
+从 [Releases](https://github.com/FHfenghuo/opencode-termux/releases) 下载 `opencode.zip`，解压并进入目录后安装：
 
 ```bash
 pkg install unzip
@@ -24,7 +24,7 @@ bash opencode-termux.sh install ./artifact
 
 ### 2. 只下载 ELF 文件
 
-从 [Releases](../../releases) 下载 `opencode` 文件后，将其放入 `opencode-build/` 目录并安装：
+从 [Releases](https://github.com/FHfenghuo/opencode-termux/releases) 下载 `opencode` 文件后，将其放入 `opencode-build/` 目录并安装：
 
 ```bash
 bash opencode-termux.sh install ./opencode
