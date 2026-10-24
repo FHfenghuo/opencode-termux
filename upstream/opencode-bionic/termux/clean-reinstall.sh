@@ -1,0 +1,150 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Remove dependencies and lockfile, reinstall, and verify critical packages.
+
+set -euo pipefail
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+MUTED='\033[0;2m'
+NC='\033[0m'
+
+ok()   { echo -e "  ${GREEN}[OK]${NC}   $*"; }
+fail() { echo -e "  ${RED}[FAIL]${NC} $*"; exit 1; }
+info() { echo -e "  ${MUTED}       $*${NC}"; }
+warn() { echo -e "  ${YELLOW}[WARN]${NC} $*"; }
+
+OPENCODE_ROOT="${OPENCODE_ROOT:-$(pwd)}"
+BUN_BIN="${BUN_BIN:-$PREFIX/bin/bun}"
+
+cd "$OPENCODE_ROOT"
+
+echo "=========================================="
+echo "clean-reinstall: nuke + verify + reinstall"
+echo "=========================================="
+echo "  OPENCODE_ROOT: $OPENCODE_ROOT"
+echo "  BUN_BIN:       $BUN_BIN"
+echo "=========================================="
+
+echo ""
+echo "=== Step 1: Delete node_modules + bun.lock ==="
+
+if [ -d node_modules ]; then
+  NM_SIZE=$(du -sh node_modules 2>/dev/null | cut -f1 || echo "?")
+  info "node_modules exists ($NM_SIZE) — deleting (this may take a minute on slow fs)"
+  rm -rf node_modules || fail "could not delete node_modules (check permissions / open files)"
+  [ ! -d node_modules ] || fail "node_modules still exists after rm -rf (filesystem issue?)"
+  ok "node_modules deleted"
+else
+  ok "node_modules already gone"
+fi
+
+if [ -f bun.lock ]; then
+  rm -f bun.lock
+  ok "bun.lock deleted"
+else
+  ok "bun.lock already gone"
+fi
+
+echo ""
+echo "=== Step 2: Verify clean state ==="
+
+if [ -d node_modules ]; then
+  fail "node_modules STILL EXISTS — deletion failed"
+fi
+if [ -f bun.lock ]; then
+  fail "bun.lock STILL EXISTS — deletion failed"
+fi
+ok "clean state verified"
+
+echo ""
+echo "=== Step 3: Run bun install ==="
+echo "  (this will take 2-5 minutes on first install — 4000+ packages)"
+echo ""
+
+# NOTE: Do NOT pipe through `tee` — on Termux /tmp may not exist, and with
+# `set -o pipefail` a tee failure would mask a successful bun install.
+# Just run bun install directly; output goes to stdout.
+"$BUN_BIN" install
+INSTALL_EXIT=$?
+
+if [ "$INSTALL_EXIT" -eq 0 ]; then
+  ok "bun install completed"
+else
+  fail "bun install failed (exit $INSTALL_EXIT)"
+fi
+
+echo ""
+echo "=== Step 4: Verify install ==="
+
+if [ ! -d node_modules ]; then
+  fail "node_modules does not exist after install"
+fi
+
+NM_COUNT=$(ls -1 node_modules 2>/dev/null | wc -l)
+info "node_modules has $NM_COUNT top-level entries"
+
+if [ "$NM_COUNT" -lt 100 ]; then
+  warn "only $NM_COUNT packages installed — expected 1000+"
+  warn "this suggests workspace packages were not resolved"
+  info ""
+  info "Checking if workspace packages exist..."
+  for pkg in @opentui/solid @opentui/keymap solid-js effect yargs zod; do
+    if [ -f "node_modules/$pkg/package.json" ]; then
+      ok "  $pkg: installed"
+    else
+      fail "  $pkg: MISSING"
+    fi
+  done
+  fail "install incomplete — only $NM_COUNT packages (expected 1000+)"
+fi
+
+ok "$NM_COUNT packages installed"
+
+echo ""
+echo "=== Critical package check ==="
+CRITICAL_OK=0
+CRITICAL_FAIL=0
+for pkg in @opentui/solid @opentui/keymap solid-js effect yargs zod @androidtui/core-android-arm64; do
+  if [ -f "node_modules/$pkg/package.json" ]; then
+    ok "$pkg"
+    CRITICAL_OK=$((CRITICAL_OK + 1))
+  else
+    fail "$pkg MISSING"
+    CRITICAL_FAIL=$((CRITICAL_FAIL + 1))
+  fi
+done
+
+# @ff-labs/fff-bun declares android in os as of 0.10.5, so the JS package
+# installs; its optional fff-bin-android-arm64 prebuilt usually does not exist
+# for the pinned version, and the loader falls back to ripgrep at runtime.
+if [ -f "node_modules/@ff-labs/fff-bun/package.json" ]; then
+  ok "@ff-labs/fff-bun (JS shim present; native bin optional on Termux)"
+else
+  info "@ff-labs/fff-bun: NOT installed (optional dep — ripgrep fallback)"
+fi
+
+SO_PATH="node_modules/@androidtui/core-android-arm64/libopentui.so"
+if [ -f "$SO_PATH" ]; then
+  ok "libopentui.so: present"
+else
+  fail "libopentui.so: MISSING"
+fi
+
+echo ""
+echo "=========================================="
+echo "Reinstall summary"
+echo "=========================================="
+echo -e "  ${GREEN}OK:${NC}   $CRITICAL_OK critical packages"
+echo -e "  ${RED}FAIL:${NC} $CRITICAL_FAIL critical packages missing"
+
+if [ "$CRITICAL_FAIL" -gt 0 ]; then
+  echo ""
+  echo -e "${RED}Some critical packages are missing. opencode will not start.${NC}"
+  echo "Check the bun install output above for errors."
+  exit 1
+fi
+
+echo ""
+ok "Install verified. Ready to run opencode:"
+echo "  bash termux/run-opencode-termux.sh"
